@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notenapp</title>
+<style>
+  :root {
+    --bg: #f5f4ef;
+    --surface: #ffffff;
+    --surface-2: #eeece4;
+    --ink: #1d2230;
+    --ink-soft: #4a5064;
+    --muted: #6b7280;
+    --border: #e1ded3;
+    --accent: #34479a;
+    --accent-ink: #ffffff;
+    --accent-soft: #e7eaf7;
+    --good: #1f8a4c;
+    --good-soft: #e4f4ea;
+    --good2: #4fae72;
+    --good2-soft: #e9f6ee;
+    --warn: #b5790a;
+    --warn-soft: #fbf0dd;
+    --bad: #b3312c;
+    --bad-soft: #fbe9e7;
+    --sport: #1c7a72;
+    --sport-soft: #e2f2ef;
+    --politik: #8a4b9e;
+    --politik-soft: #f2e7f5;
+    --focus: #34479a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15161b; --surface: #1e2029; --surface-2: #262834;
+      --ink: #eceef5; --ink-soft: #c2c5d6; --muted: #8a8fa3; --border: #333644;
+      --accent: #7b8fe8; --accent-ink: #10121a; --accent-soft: #262c4a;
+      --good: #5cc98a; --good-soft: #16301f; --good2: #7fd6a0; --good2-soft: #1b3626;
+      --warn: #e0ab4c; --warn-soft: #362909; --bad: #e2726b; --bad-soft: #3a1a17;
+      --sport: #59c2b8; --sport-soft: #163330; --politik: #cf9ade; --politik-soft: #2f2136;
+      --focus: #7b8fe8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15161b; --surface: #1e2029; --surface-2: #262834;
+    --ink: #eceef5; --ink-soft: #c2c5d6; --muted: #8a8fa3; --border: #333644;
+    --accent: #7b8fe8; --accent-ink: #10121a; --accent-soft: #262c4a;
+    --good: #5cc98a; --good-soft: #16301f; --good2: #7fd6a0; --good2-soft: #1b3626;
+    --warn: #e0ab4c; --warn-soft: #362909; --bad: #e2726b; --bad-soft: #3a1a17;
+    --sport: #59c2b8; --sport-soft: #163330; --politik: #cf9ade; --politik-soft: #2f2136;
+    --focus: #7b8fe8;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    padding-inline: 16px; padding-block: 24px; min-height: 100%;
+  }
+  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; text-wrap: balance; margin: 0; }
+  .mono, td.num, .avg-value { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  a { color: var(--accent); }
+  button { font: inherit; cursor: pointer; }
+  .btn { background: var(--accent); color: var(--accent-ink); border: none; border-radius: 8px; padding: 0.55rem 1rem; font-weight: 600; transition: opacity .15s; }
+  .btn:hover { opacity: .88; }
+  .btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+  .btn.ghost { background: transparent; color: var(--muted); border: none; padding: 0.35rem 0.55rem; font-size: 0.85rem; }
+  .btn.ghost:hover { color: var(--bad); }
+  .btn.small { padding: 0.35rem 0.7rem; font-size: 0.82rem; }
+  .btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  input, select, textarea { background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 7px; padding: 0.5rem 0.6rem; font: inherit; }
+  label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; color: var(--ink-soft); }
+  form.row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: end; }
+  form.row label { flex: 1 1 140px; }
+  .shell { max-width: 1100px; margin: 0 auto; }
+
+  /* Login (unchanged style) */
+  .login-wrap { min-height: 70vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 1.1rem; }
+  .login-card .brand { display: flex; align-items: center; gap: 0.6rem; }
+  .login-card .brand .mark { width: 38px; height: 38px; border-radius: 9px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-family: "Fraunces", serif; font-weight: 600; }
+  .tabs { display: flex; gap: 0.4rem; background: var(--surface-2); border-radius: 8px; padding: 4px; }
+  .tabs button { flex: 1; background: transparent; border: none; border-radius: 6px; padding: 0.5rem; color: var(--muted); font-weight: 600; font-size: 0.9rem; }
+  .tabs button.active { background: var(--surface); color: var(--ink); }
+  .login-card form { display: flex; flex-direction: column; gap: 0.8rem; }
+  .hint { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+  .error-box { background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 0.55rem 0.7rem; font-size: 0.85rem; }
+
+  /* App shell */
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.2rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); gap: 1rem; flex-wrap: wrap; }
+  .topbar .who { display: flex; align-items: center; gap: 0.7rem; color: var(--ink-soft); font-size: 0.9rem; }
+  .topbar .who .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; }
+  .banner { background: var(--warn-soft); color: var(--warn); border-radius: 10px; padding: 0.6rem 0.9rem; font-size: 0.82rem; margin-bottom: 1.2rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.1rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.9rem; }
+  .card.wide { grid-column: 1 / -1; }
+  .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+  .card-head p { margin: 0; font-size: 0.8rem; color: var(--muted); }
+  .count-pill { background: var(--surface-2); color: var(--ink-soft); border-radius: 999px; padding: 0.15rem 0.55rem; font-size: 0.75rem; font-weight: 600; }
+
+  /* Course list */
+  .course-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.9rem; }
+  .course-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; text-align: left; display: flex; flex-direction: column; gap: 0.5rem; }
+  .course-card:hover { border-color: var(--accent); }
+  .course-card h3 { font-size: 1rem; }
+  .subject-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; border-radius: 999px; padding: 0.2rem 0.55rem; width: fit-content; }
+  .subject-badge.sport { background: var(--sport-soft); color: var(--sport); }
+  .subject-badge.politik { background: var(--politik-soft); color: var(--politik); }
+  .course-card .meta { font-size: 0.8rem; color: var(--muted); }
+
+  /* Breadcrumb / subnav */
+  .subnav { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--muted); }
+  .subnav .crumb-active { color: var(--ink); font-weight: 600; }
+  .subnav button.link { background: none; border: none; color: var(--accent); font-weight: 600; padding: 0; }
+
+  ul.plain { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+  ul.plain li { display: flex; align-items: center; justify-content: space-between; background: var(--surface-2); border-radius: 8px; padding: 0.5rem 0.65rem; font-size: 0.88rem; gap: 0.5rem; }
+  ul.plain li.clickable { cursor: pointer; }
+  ul.plain li.clickable:hover { outline: 1px solid var(--border); }
+  ul.plain li.selected { outline: 2px solid var(--accent); background: var(--accent-soft); }
+  ul.plain li .sub { color: var(--muted); font-size: 0.78rem; }
+  .empty { color: var(--muted); font-size: 0.85rem; font-style: italic; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  table th, table td { text-align: left; padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  table th { color: var(--muted); font-weight: 600; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .table-wrap { overflow-x: auto; }
+
+  /* Segmented toggles */
+  .toggle-group { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+  .toggle-group button { border: none; background: var(--surface); color: var(--muted); padding: 0.3rem 0.6rem; font-size: 0.78rem; font-weight: 600; border-right: 1px solid var(--border); }
+  .toggle-group button:last-child { border-right: none; }
+  .toggle-group button.active.present { background: var(--good-soft); color: var(--good); }
+  .toggle-group button.active.absent { background: var(--bad-soft); color: var(--bad); }
+  .toggle-group button.active.excused { background: var(--warn-soft); color: var(--warn); }
+  .toggle-group button.active.unexcused { background: var(--bad-soft); color: var(--bad); }
+  .toggle-group button.active.notmit { background: var(--politik-soft); color: var(--politik); }
+  .toggle-group button.active.activity { background: var(--accent-soft); color: var(--accent); }
+  .toggle-group button.active.ordentlich { background: var(--good-soft); color: var(--good); }
+  .toggle-group button.active.nichtordentlich { background: var(--bad-soft); color: var(--bad); }
+  .toggle-group.disabled button { opacity: 0.35; pointer-events: none; }
+  .status-cell { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+
+  .rating-buttons { display: inline-flex; gap: 0.25rem; }
+  .rating-buttons button { width: 2.1rem; height: 1.9rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--ink-soft); font-weight: 700; font-size: 0.85rem; }
+  .rating-buttons button[data-symbol="pp"].active { background: var(--good2-soft); color: var(--good2); border-color: var(--good2); }
+  .rating-buttons button[data-symbol="p"].active { background: var(--good-soft); color: var(--good); border-color: var(--good); }
+  .rating-buttons button[data-symbol="o"].active { background: var(--surface-2); color: var(--ink-soft); border-color: var(--muted); }
+  .rating-buttons button[data-symbol="m"].active { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+  .rating-buttons button[data-symbol="mm"].active { background: var(--bad-soft); color: var(--bad); border-color: var(--bad); }
+  input.numeric-rating { width: 4.5rem; }
+
+  .badge { display: inline-flex; align-items: center; justify-content: center; min-width: 1.8rem; padding: 0.1rem 0.45rem; border-radius: 999px; font-weight: 700; font-size: 0.8rem; }
+  .badge.good { background: var(--good-soft); color: var(--good); }
+  .badge.warn { background: var(--warn-soft); color: var(--warn); }
+  .badge.bad { background: var(--bad-soft); color: var(--bad); }
+  .badge.neutral { background: var(--surface-2); color: var(--ink-soft); }
+
+  .att-rate { font-weight: 700; }
+  .att-rate.low { color: var(--bad); }
+  .att-rate.mid { color: var(--warn); }
+  .att-rate.high { color: var(--good); }
+
+  .weighting-form { display: flex; gap: 0.8rem; align-items: end; flex-wrap: wrap; }
+  .weighting-form input { width: 5rem; }
+
+  textarea.roster { min-height: 90px; font-family: inherit; resize: vertical; }
+
+  [hidden] { display: none !important; }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+</head>
+<body>
+<div class="shell">
+
+  <div id="login-screen" class="login-wrap">
+    <div class="login-card">
+      <div class="brand">
+        <div class="mark">N</div>
+        <div>
+          <h1 style="font-size:1.3rem;">Notenapp</h1>
+          <div class="hint">Prototyp &ndash; nur Funktionalität, Design folgt später</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <button id="tab-login" class="active" type="button">Login</button>
+        <button id="tab-register" type="button">Registrieren</button>
+      </div>
+      <div id="login-error" class="error-box" hidden></div>
+      <form id="login-form">
+        <label>E-Mail<input type="email" id="login-email" required value="lehrer@schule.de" /></label>
+        <label>Passwort<input type="password" id="login-password" required value="demo1234" /></label>
+        <button class="btn" type="submit">Anmelden</button>
+      </form>
+      <form id="register-form" hidden>
+        <label>Name<input type="text" id="register-name" required /></label>
+        <label>E-Mail<input type="email" id="register-email" required /></label>
+        <label>Passwort (mind. 8 Zeichen)<input type="password" id="register-password" required minlength="8" /></label>
+        <button class="btn" type="submit">Konto erstellen</button>
+      </form>
+      <div class="hint">Demo-Zugang ist vorausgefüllt. Alle Daten leben nur in diesem Browser-Tab.</div>
+    </div>
+  </div>
+
+  <div id="app-screen" hidden>
+    <div class="banner">Funktions-Prototyp ohne eigenes Design &ndash; Layout &amp; Feinschliff kommen als Nächstes.</div>
+    <div class="topbar">
+      <h1 style="font-size:1.4rem;">Notenapp</h1>
+      <div class="who">
+        <div class="avatar" id="user-initial"></div>
+        <span id="user-name"></span>
+        <button class="btn secondary" id="logout-btn" type="button">Logout</button>
+      </div>
+    </div>
+    <div id="main"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function round1(n) { return Math.round(n * 10) / 10; }
+  function formatDate(iso) {
+    if (!iso) return "";
+    var parts = iso.split("-");
+    if (parts.length !== 3) return iso;
+    return parts[2] + "." + parts[1] + "." + parts[0];
+  }
+
+  var SYMBOL_LABEL = { pp: "++", p: "+", o: "o", m: "−", mm: "−−" };
+  var SYMBOL_VALUE = { pp: 1, p: 2, o: 3, m: 4, mm: 5 };
+  var SYMBOL_ORDER = ["pp", "p", "o", "m", "mm"];
+
+  function ratingToNumeric(course, value) {
+    if (value === null || value === undefined || value === "") return null;
+    return course.ratingScale === "symbols" ? SYMBOL_VALUE[value] : Number(value);
+  }
+
+  function gradeClass(v) {
+    if (v == null) return "neutral";
+    if (v <= 2) return "good";
+    if (v <= 4) return "warn";
+    return "bad";
+  }
+
+  function ratingLabel(course, value) {
+    if (value === null || value === undefined || value === "") return "–";
+    return course.ratingScale === "symbols" ? SYMBOL_LABEL[value] : value;
+  }
+
+  // Reihen-Leistungsnote eines Schülers: Ø der Bewertungen (nur "anwesend"), Empfehlung + Override.
+  function sportLeistungForStudent(course, reihe, studentId) {
+    var vals = [];
+    reihe.einheiten.forEach(function (e) {
+      var rec = e.records[studentId];
+      if (rec && rec.status === "anwesend") { var n = ratingToNumeric(course, rec.rating); if (n != null) vals.push(n); }
+    });
+    var avg = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
+    var suggestion = avg == null ? null : round1(avg);
+    var override = reihe.overrides[studentId];
+    var override2 = override !== undefined ? override : null;
+    return { avg: avg, suggestion: suggestion, override: override2, final: override2 != null ? override2 : suggestion };
+  }
+
+  // Politik-Endnote eines Schülers: drei getrennte Säulen (mündliche Mitarbeit, fachspez.
+  // Leistung, Klausurnote), daraus eine Empfehlung, die frei überschreibbar ist.
+  function politikLeistungForStudent(course, studentId) {
+    var vals = [];
+    course.stunden.forEach(function (st) {
+      if (!st.countsTowardMitarbeit) return;
+      var rec = st.records[studentId];
+      if (rec && rec.present) { var n = ratingToNumeric(course, rec.rating); if (n != null) vals.push(n); }
+    });
+    var avg = vals.length ? vals.reduce(function (a, b) { return a + b; }, 0) / vals.length : null;
+    var mitarbeitSuggestion = avg == null ? null : round1(avg);
+    var mitarbeitOverrideRaw = course.mitarbeitOverrides[studentId];
+    var mitarbeitOverride = mitarbeitOverrideRaw !== undefined ? mitarbeitOverrideRaw : null;
+    var mitarbeit = mitarbeitOverride != null ? mitarbeitOverride : mitarbeitSuggestion;
+
+    var fachLeistungList = course.fachLeistung[studentId] || [];
+    var fachLeistungCount = fachLeistungList.length;
+    var fachLeistung = fachLeistungCount
+      ? round1(fachLeistungList.reduce(function (a, b) { return a + b.value; }, 0) / fachLeistungCount)
+      : null;
+
+    var kSum = 0, kWeight = 0;
+    course.klausuren.forEach(function (k) {
+      var g = k.grades[studentId];
+      if (g != null) { kSum += g * k.weight; kWeight += k.weight; }
+    });
+    var klausurNote = kWeight ? round1(kSum / kWeight) : null;
+
+    var wm = course.weighting.mitarbeit, wl = course.weighting.leistung, wk = course.weighting.klausur;
+    var empfehlung = (mitarbeit != null && fachLeistung != null && klausurNote != null && (wm + wl + wk) > 0)
+      ? round1((mitarbeit * wm + fachLeistung * wl + klausurNote * wk) / (wm + wl + wk)) : null;
+
+    var endnoteOverrideRaw = course.endnoteOverrides[studentId];
+    var endnoteOverride = endnoteOverrideRaw !== undefined ? endnoteOverrideRaw : null;
+    var endnote = endnoteOverride != null ? endnoteOverride : empfehlung;
+
+    return {
+      avg: avg, mitarbeitSuggestion: mitarbeitSuggestion, mitarbeitOverride: mitarbeitOverride, mitarbeit: mitarbeit,
+      fachLeistung: fachLeistung, fachLeistungCount: fachLeistungCount, klausurNote: klausurNote,
+      empfehlung: empfehlung, endnoteOverride: endnoteOverride, endnote: endnote
+    };
+  }
+
+  // ---------- Demo "database" ----------
+  var db = { users: [{ name: "Frau Musterlehrerin", email: "lehrer@schule.de", password: "demo1234" }] };
+  var session = null;
+
+  function makeStudents(names) {
+    return names.map(function (n, i) { return { id: i + 1, name: n }; });
+  }
+
+  function seedCourses() {
+    return [
+      {
+        id: 1, name: "8b – Sport", subject: "sport", ratingScale: "numeric",
+        students: makeStudents(["Max Mustermann", "Anna Beispiel", "Lena Schmidt", "Tom Berger", "Nina Vogel"]),
+        seq: { reihe: 2, einheit: 3 },
+        reihen: [{
+          id: 1, name: "Volleyball", overrides: {},
+          einheiten: [
+            { id: 1, date: "2026-09-01", thema: "Aufschlag", records: {
+              1: { status: "anwesend", excused: null, activity: null, rating: 2 },
+              2: { status: "anwesend", excused: null, activity: null, rating: 1 },
+              3: { status: "fehlend", excused: true, activity: null, rating: null },
+              4: { status: "nicht_mit", excused: true, activity: "protokoll", quality: "ordentlich", rating: null },
+              5: { status: "anwesend", excused: null, activity: null, rating: 2 } } },
+            { id: 2, date: "2026-09-08", thema: "Annahme und Zuspiel", records: {
+              1: { status: "anwesend", excused: null, activity: null, rating: 3 },
+              2: { status: "anwesend", excused: null, activity: null, rating: 2 },
+              3: { status: "anwesend", excused: null, activity: null, rating: 2 },
+              4: { status: "fehlend", excused: false, activity: null, rating: null },
+              5: { status: "anwesend", excused: null, activity: null, rating: 1 } } }
+          ]
+        }]
+      },
+      {
+        id: 2, name: "Q1 – Politik", subject: "politik", ratingScale: "numeric",
+        students: makeStudents(["Max Mustermann", "Anna Beispiel", "Lena Schmidt", "Tom Berger"]),
+        seq: { stunde: 3, klausur: 2, fachLeistung: 4 },
+        weighting: { mitarbeit: 30, leistung: 30, klausur: 40 },
+        mitarbeitOverrides: {},
+        fachLeistung: {
+          1: [{ id: 1, value: 2, label: "Referat" }],
+          2: [{ id: 2, value: 2, label: "Projekt" }, { id: 3, value: 3, label: "Referat" }]
+        },
+        endnoteOverrides: {},
+        stunden: [
+          { id: 1, date: "2026-09-02", countsTowardMitarbeit: true, records: {
+            1: { present: true, excused: null, rating: 2 }, 2: { present: true, excused: null, rating: 1 },
+            3: { present: false, excused: false, rating: null }, 4: { present: true, excused: null, rating: 2 } } },
+          { id: 2, date: "2026-09-09", countsTowardMitarbeit: false, records: {
+            1: { present: true, excused: null, rating: 2 }, 2: { present: true, excused: null, rating: 2 },
+            3: { present: true, excused: null, rating: 3 }, 4: { present: true, excused: null, rating: 2 } } }
+        ],
+        klausuren: [
+          { id: 1, name: "Klausur 1", weight: 1, grades: { 1: 2, 2: 1.5, 3: 3, 4: 2.5 } }
+        ]
+      }
+    ];
+  }
+
+  var dataByUser = { "lehrer@schule.de": { courses: seedCourses(), nextCourseId: 3 } };
+
+  function currentData() {
+    if (!dataByUser[session]) dataByUser[session] = { courses: [], nextCourseId: 1 };
+    return dataByUser[session];
+  }
+  function getCourse(id) { return currentData().courses.find(function (c) { return c.id === id; }); }
+
+  // ---------- View state ----------
+  var view = { screen: "list", courseId: null, reihenId: null, einheitId: null, stundeId: null, klausurId: null, studentId: null };
+  function resetCourseView() { view.reihenId = null; view.einheitId = null; view.stundeId = null; view.klausurId = null; view.studentId = null; }
+
+  // ---------- Auth ----------
+  el("tab-login").addEventListener("click", function () {
+    el("tab-login").classList.add("active"); el("tab-register").classList.remove("active");
+    el("login-form").hidden = false; el("register-form").hidden = true; el("login-error").hidden = true;
+  });
+  el("tab-register").addEventListener("click", function () {
+    el("tab-register").classList.add("active"); el("tab-login").classList.remove("active");
+    el("register-form").hidden = false; el("login-form").hidden = true; el("login-error").hidden = true;
+  });
+  function showLoginError(msg) { var b = el("login-error"); b.textContent = msg; b.hidden = false; }
+
+  el("login-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var email = el("login-email").value.trim().toLowerCase();
+    var password = el("login-password").value;
+    var user = db.users.find(function (u) { return u.email === email; });
+    if (!user || user.password !== password) { showLoginError("E-Mail oder Passwort ist falsch."); return; }
+    session = user.email; enterApp(user);
+  });
+  el("register-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var name = el("register-name").value.trim();
+    var email = el("register-email").value.trim().toLowerCase();
+    var password = el("register-password").value;
+    if (db.users.some(function (u) { return u.email === email; })) { showLoginError("Diese E-Mail ist bereits registriert."); return; }
+    var user = { name: name, email: email, password: password };
+    db.users.push(user); session = user.email; enterApp(user);
+  });
+  function enterApp(user) {
+    el("login-screen").hidden = true; el("app-screen").hidden = false;
+    el("user-name").textContent = user.name + " (" + user.email + ")";
+    el("user-initial").textContent = user.name.slice(0, 1).toUpperCase();
+    view = { screen: "list", courseId: null };
+    render();
+  }
+  el("logout-btn").addEventListener("click", function () {
+    session = null; el("app-screen").hidden = true; el("login-screen").hidden = false; el("login-error").hidden = true;
+  });
+
+  // ---------- Rendering ----------
+  var main = el("main");
+
+  function render() {
+    if (view.screen === "list") { main.innerHTML = renderCourseList(); return; }
+    var course = getCourse(view.courseId);
+    if (!course) { view.screen = "list"; main.innerHTML = renderCourseList(); return; }
+    if (view.studentId) {
+      var student = course.students.find(function (s) { return s.id === view.studentId; });
+      if (student) {
+        main.innerHTML = course.subject === "sport" ? renderSportStudentDetail(course, student) : renderPolitikStudentDetail(course, student);
+        return;
+      }
+      view.studentId = null;
+    }
+    main.innerHTML = course.subject === "sport" ? renderSportCourse(course) : renderPolitikCourse(course);
+  }
+
+  function renderCourseList() {
+    var data = currentData();
+    var cards = data.courses.map(function (c) {
+      return '<button class="course-card" data-action="open-course" data-id="' + c.id + '">' +
+        '<span class="subject-badge ' + c.subject + '">' + (c.subject === "sport" ? "Sport" : "Politik") + '</span>' +
+        "<h3>" + esc(c.name) + "</h3>" +
+        '<span class="meta">' + c.students.length + " Schüler</span>" +
+        "</button>";
+    }).join("");
+
+    return (
+      '<div class="card wide">' +
+        '<div class="card-head"><h2 style="font-size:1.1rem;">Meine Kurse</h2><span class="count-pill">' + data.courses.length + " / ca. 10</span></div>" +
+        '<p style="margin:0; font-size:0.85rem; color:var(--muted);">Klicke auf einen Kurs, um Anwesenheit, Bewertungen und Noten zu verwalten.</p>' +
+        '<div class="course-list">' + (cards || '<span class="empty">Noch keine Kurse angelegt.</span>') + "</div>" +
+      "</div>" +
+      '<div class="card wide" style="margin-top:1.1rem;">' +
+        '<div class="card-head"><h2 style="font-size:1.05rem;">Neuen Kurs anlegen</h2></div>' +
+        '<form class="row" data-form="add-course" style="align-items:start;">' +
+          '<label>Kursname<input type="text" name="name" placeholder="z.B. 9a – Sport" required /></label>' +
+          '<label>Fach<select name="subject">' +
+            '<option value="sport">Sport</option><option value="politik">Politik</option>' +
+          "</select></label>" +
+          '<label>Bewertungsskala für Unterrichtsbewertung' +
+            '<select name="ratingScale"><option value="numeric">Note (1–6)</option><option value="symbols">Symbole (++ / + / o / − / −−)</option></select>' +
+          "</label>" +
+          '<label style="flex:1 1 260px;">Schülerliste (ein Name pro Zeile)' +
+            '<textarea class="roster" name="roster" placeholder="Max Mustermann\nAnna Beispiel\n..."></textarea>' +
+          "</label>" +
+          '<button class="btn" type="submit">Kurs anlegen</button>' +
+        "</form>" +
+      "</div>"
+    );
+  }
+
+  function subnav(course, crumbs) {
+    var parts = ['<button class="link" type="button" data-action="back-to-list">Kurse</button>', "<span>/</span>"];
+    crumbs.forEach(function (c, i) {
+      if (i > 0) parts.push("<span>/</span>");
+      if (c.action) parts.push('<button class="link" type="button" data-action="' + c.action + '">' + esc(c.label) + "</button>");
+      else parts.push('<span class="crumb-active">' + esc(c.label) + "</span>");
+    });
+    return '<div class="subnav">' + parts.join(" ") + "</div>";
+  }
+
+  function attendanceOverview(course, allRecordsPerStudent) {
+    // allRecordsPerStudent: {studentId: [{present, excused}, ...]}
+    var rows = course.students.map(function (s) {
+      var recs = allRecordsPerStudent[s.id] || [];
+      var total = recs.length;
+      var present = recs.filter(function (r) { return r.present; }).length;
+      var absentExcused = recs.filter(function (r) { return !r.present && r.excused; }).length;
+      var absentUnexcused = recs.filter(function (r) { return !r.present && !r.excused; }).length;
+      var rate = total ? Math.round((present / total) * 100) : null;
+      var rateClass = rate == null ? "" : rate >= 90 ? "high" : rate >= 75 ? "mid" : "low";
+      return "<tr><td><button class=\"btn ghost\" style=\"padding:0; font-weight:600; color:var(--ink);\" type=\"button\" data-action=\"select-student\" data-id=\"" + s.id + "\">" + esc(s.name) + "</button></td>" +
+        '<td class="num">' + total + "</td>" +
+        '<td class="num">' + present + "</td>" +
+        '<td class="num">' + absentExcused + "</td>" +
+        '<td class="num">' + absentUnexcused + "</td>" +
+        '<td class="num att-rate ' + rateClass + '">' + (rate == null ? "–" : rate + "%") + "</td>" +
+        "</tr>";
+    }).join("");
+    return '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Anwesenheit – Übersicht</h2><p>Klick auf einen Namen für die Einzelansicht</p></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Einheiten</th><th>Anwesend</th><th>Entschuldigt</th><th>Unentschuldigt</th><th>Quote</th></tr></thead>' +
+      "<tbody>" + (rows || "") + "</tbody></table></div></div>";
+  }
+
+  function attendanceToggle(record, studentId, prefix) {
+    var present = record.present;
+    var out = '<div class="toggle-group" data-student="' + studentId + '">' +
+      '<button type="button" class="' + (present ? "active present" : "") + '" data-action="' + prefix + '-present" data-student="' + studentId + '">Anwesend</button>' +
+      '<button type="button" class="' + (!present ? "active absent" : "") + '" data-action="' + prefix + '-absent" data-student="' + studentId + '">Fehlend</button>' +
+      "</div>";
+    out += ' <div class="toggle-group ' + (present ? "disabled" : "") + '" data-student="' + studentId + '">' +
+      '<button type="button" class="' + (!present && record.excused === true ? "active excused" : "") + '" data-action="' + prefix + '-excused" data-student="' + studentId + '">Entschuldigt</button>' +
+      '<button type="button" class="' + (!present && record.excused === false ? "active unexcused" : "") + '" data-action="' + prefix + '-unexcused" data-student="' + studentId + '">Unentschuldigt</button>' +
+      "</div>";
+    return out;
+  }
+
+  // ---------- Sport: 3-stufige Anwesenheit (Anwesend / Fehlend / Macht nicht mit) ----------
+  function newSportRecord() { return { status: "anwesend", excused: null, activity: null, quality: null, rating: null }; }
+  var SPORT_ACTIVITIES = [["text", "Text abschreiben"], ["aufbau", "Auf-/Abbau helfen"], ["protokoll", "Protokoll schreiben"]];
+
+  function setSportField(records, studentId, key, value) {
+    var rec = records[studentId] || newSportRecord();
+    var patch = {};
+    patch[key] = value;
+    records[studentId] = Object.assign({}, rec, patch);
+  }
+
+  function setSportStatus(records, studentId, status) {
+    var rec = records[studentId] || newSportRecord();
+    var patch = { status: status };
+    if (status === "anwesend") { patch.excused = null; patch.activity = null; patch.quality = null; }
+    else if (status === "fehlend") { patch.rating = null; patch.activity = null; patch.quality = null; if (rec.excused == null) patch.excused = false; }
+    else if (status === "nicht_mit") { patch.rating = null; if (rec.excused == null) patch.excused = false; }
+    records[studentId] = Object.assign({}, rec, patch);
+  }
+
+  function sportAttendanceControl(record, studentId) {
+    var status = record.status;
+    var statusOptions = [["anwesend", "Anwesend", "present"], ["fehlend", "Fehlend", "absent"], ["nicht_mit", "Macht nicht mit", "notmit"]];
+    var statusBtns = statusOptions.map(function (opt) {
+      return '<button type="button" class="' + (status === opt[0] ? "active " + opt[2] : "") + '" data-action="sport-status" data-student="' + studentId + '" data-value="' + opt[0] + '">' + opt[1] + "</button>";
+    }).join("");
+    var out = '<div class="status-cell"><div class="toggle-group" data-student="' + studentId + '">' + statusBtns + "</div>";
+
+    var needsExcused = status === "fehlend" || status === "nicht_mit";
+    out += '<div class="toggle-group ' + (needsExcused ? "" : "disabled") + '" data-student="' + studentId + '">' +
+      '<button type="button" class="' + (needsExcused && record.excused === true ? "active excused" : "") + '" data-action="sport-excused" data-student="' + studentId + '" data-value="true">Entschuldigt</button>' +
+      '<button type="button" class="' + (needsExcused && record.excused === false ? "active unexcused" : "") + '" data-action="sport-excused" data-student="' + studentId + '" data-value="false">Unentschuldigt</button>' +
+      "</div>";
+
+    if (status === "nicht_mit") {
+      var activityBtns = SPORT_ACTIVITIES.map(function (opt) {
+        return '<button type="button" class="' + (record.activity === opt[0] ? "active activity" : "") + '" data-action="sport-activity" data-student="' + studentId + '" data-value="' + opt[0] + '">' + opt[1] + "</button>";
+      }).join("");
+      out += '<div class="toggle-group" data-student="' + studentId + '">' + activityBtns + "</div>";
+
+      if (record.activity) {
+        out += '<div class="toggle-group" data-student="' + studentId + '">' +
+          '<button type="button" class="' + (record.quality === "ordentlich" ? "active ordentlich" : "") + '" data-action="sport-quality" data-student="' + studentId + '" data-value="ordentlich">Ordentlich</button>' +
+          '<button type="button" class="' + (record.quality === "nicht_ordentlich" ? "active nichtordentlich" : "") + '" data-action="sport-quality" data-student="' + studentId + '" data-value="nicht_ordentlich">Nicht ordentlich</button>' +
+          "</div>";
+      }
+    }
+    out += "</div>";
+    return out;
+  }
+
+  function ratingControl(course, studentId, value, prefix) {
+    if (course.ratingScale === "symbols") {
+      var buttons = SYMBOL_ORDER.map(function (sym) {
+        return '<button type="button" data-symbol="' + sym + '" class="' + (value === sym ? "active" : "") + '" data-action="' + prefix + '-rating-symbol" data-student="' + studentId + '" data-value="' + sym + '">' + SYMBOL_LABEL[sym] + "</button>";
+      }).join("");
+      return '<div class="rating-buttons">' + buttons + "</div>";
+    }
+    return '<input class="numeric-rating" type="number" min="1" max="6" step="0.5" value="' + (value == null ? "" : value) + '" data-action="' + prefix + '-rating-numeric" data-student="' + studentId + '" />';
+  }
+
+  function sportAttendanceOverview(course, allRecordsPerStudent) {
+    var rows = course.students.map(function (s) {
+      var recs = allRecordsPerStudent[s.id] || [];
+      var total = recs.length;
+      var anwesend = recs.filter(function (r) { return r.status === "anwesend"; }).length;
+      var nichtMit = recs.filter(function (r) { return r.status === "nicht_mit"; }).length;
+      var fehlend = recs.filter(function (r) { return r.status === "fehlend"; }).length;
+      var entschuldigt = recs.filter(function (r) { return r.status !== "anwesend" && r.excused === true; }).length;
+      var unentschuldigt = recs.filter(function (r) { return r.status !== "anwesend" && r.excused === false; }).length;
+      var rate = total ? Math.round((anwesend / total) * 100) : null;
+      var rateClass = rate == null ? "" : rate >= 90 ? "high" : rate >= 75 ? "mid" : "low";
+      return "<tr><td><button class=\"btn ghost\" style=\"padding:0; font-weight:600; color:var(--ink);\" type=\"button\" data-action=\"select-student\" data-id=\"" + s.id + "\">" + esc(s.name) + "</button></td>" +
+        '<td class="num">' + total + "</td>" +
+        '<td class="num">' + anwesend + "</td>" +
+        '<td class="num">' + nichtMit + "</td>" +
+        '<td class="num">' + fehlend + "</td>" +
+        '<td class="num">' + entschuldigt + "</td>" +
+        '<td class="num">' + unentschuldigt + "</td>" +
+        '<td class="num att-rate ' + rateClass + '">' + (rate == null ? "–" : rate + "%") + "</td>" +
+        "</tr>";
+    }).join("");
+    return '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Anwesenheit – Übersicht</h2><p>Klick auf einen Namen für die Einzelansicht</p></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Einheiten</th><th>Anwesend</th><th>Macht nicht mit</th><th>Fehlend</th><th>Entschuldigt</th><th>Unentschuldigt</th><th>Quote</th></tr></thead>' +
+      "<tbody>" + (rows || "") + "</tbody></table></div></div>";
+  }
+
+  // ================= SPORT =================
+  function renderSportCourse(course) {
+    var recordsPerStudent = {};
+    course.students.forEach(function (s) { recordsPerStudent[s.id] = []; });
+    course.reihen.forEach(function (r) {
+      r.einheiten.forEach(function (e) {
+        course.students.forEach(function (s) {
+          var rec = e.records[s.id];
+          if (rec) recordsPerStudent[s.id].push(rec);
+        });
+      });
+    });
+
+    var crumbs = [{ label: course.name }];
+    var reihe = view.reihenId ? course.reihen.find(function (r) { return r.id === view.reihenId; }) : null;
+    if (reihe) crumbs.push({ label: reihe.name });
+
+    var html = subnav(course, crumbs);
+    html += '<div class="card-head" style="margin-bottom:1rem;"><h2 style="font-size:1.3rem;">' + esc(course.name) + '</h2><button class="btn ghost" type="button" data-action="delete-course" data-id="' + course.id + '">Kurs löschen</button></div>';
+    html += sportAttendanceOverview(course, recordsPerStudent);
+    html += '<div class="grid" style="margin-top:1.1rem;">';
+
+    // Reihen list
+    html += '<div class="card"><div class="card-head"><h2 style="font-size:1.05rem;">Unterrichtsreihen</h2><span class="count-pill">' + course.reihen.length + '</span></div>';
+    html += '<ul class="plain">' + (course.reihen.map(function (r) {
+      return '<li class="clickable ' + (view.reihenId === r.id ? "selected" : "") + '" data-action="select-reihe" data-id="' + r.id + '"><span>' + esc(r.name) + '</span><span class="sub">' + r.einheiten.length + " Einheiten</span></li>";
+    }).join("") || '<li class="empty" style="background:transparent;">Noch keine Reihe angelegt.</li>') + "</ul>";
+    html += '<form class="row" data-form="add-reihe" data-course="' + course.id + '"><label style="flex:1;">Neue Reihe<input type="text" name="name" placeholder="z.B. Leichtathletik" required /></label><button class="btn small" type="submit">Anlegen</button></form>';
+    html += "</div>";
+
+    if (reihe) {
+      var einheit = view.einheitId ? reihe.einheiten.find(function (e) { return e.id === view.einheitId; }) : null;
+
+      html += '<div class="card"><div class="card-head"><h2 style="font-size:1.05rem;">Einheiten – ' + esc(reihe.name) + '</h2><span class="count-pill">' + reihe.einheiten.length + '</span></div>';
+      html += '<ul class="plain">' + (reihe.einheiten.map(function (e) {
+        return '<li class="clickable ' + (view.einheitId === e.id ? "selected" : "") + '" data-action="select-einheit" data-id="' + e.id + '"><span>' + (e.date ? formatDate(e.date) : "(ohne Datum)") + '</span><span class="sub">' + (e.thema ? esc(e.thema) : "") + '</span></li>';
+      }).join("") || '<li class="empty" style="background:transparent;">Noch keine Einheit angelegt.</li>') + "</ul>";
+      html += '<form class="row" data-form="add-einheit" data-reihe="' + reihe.id + '"><label>Neue Einheit (Datum)<input type="date" name="date" required /></label><label style="flex:1;">Thema (optional)<input type="text" name="thema" placeholder="z.B. Aufschlag" /></label><button class="btn small" type="submit">Anlegen</button></form>';
+      html += "</div>";
+
+      if (einheit) {
+        html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Anwesenheit &amp; Bewertung – ' + formatDate(einheit.date) + (einheit.thema ? " – " + esc(einheit.thema) : "") + '</h2></div>';
+        html += '<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Anwesenheit</th><th>Bewertung</th></tr></thead><tbody>';
+        html += course.students.map(function (s) {
+          var rec = einheit.records[s.id] || newSportRecord();
+          return "<tr><td>" + esc(s.name) + "</td><td>" + sportAttendanceControl(rec, s.id) + "</td><td>" + (rec.status === "anwesend" ? ratingControl(course, s.id, rec.rating, "einheit") : '<span class="empty">entfällt</span>') + "</td></tr>";
+        }).join("") + "</tbody></table></div></div>";
+      }
+
+      // Leistungsnote table
+      html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Leistungsnote – ' + esc(reihe.name) + '</h2><p>Automatisch aus den Bewertungen berechnet, überschreibbar</p></div>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Ø Bewertung</th><th>Vorschlag</th><th>Leistungsnote</th></tr></thead><tbody>';
+      html += course.students.map(function (s) {
+        var calc = sportLeistungForStudent(course, reihe, s.id);
+        return "<tr><td>" + esc(s.name) + "</td>" +
+          '<td class="num">' + (calc.avg == null ? "–" : calc.avg.toFixed(2)) + "</td>" +
+          '<td class="num"><span class="badge ' + gradeClass(calc.suggestion) + '">' + (calc.suggestion == null ? "–" : calc.suggestion) + "</span></td>" +
+          '<td><input class="numeric-rating" type="number" min="1" max="6" step="0.5" placeholder="' + (calc.suggestion == null ? "–" : calc.suggestion) + '" value="' + (calc.override != null ? calc.override : "") + '" data-action="set-leistungsnote" data-reihe="' + reihe.id + '" data-student="' + s.id + '" /></td>' +
+          "</tr>";
+      }).join("") + "</tbody></table></div></div>";
+    }
+
+    html += "</div>";
+    return html;
+  }
+
+  // ================= POLITIK =================
+  function renderPolitikCourse(course) {
+    var recordsPerStudent = {};
+    course.students.forEach(function (s) { recordsPerStudent[s.id] = []; });
+    course.stunden.forEach(function (st) {
+      course.students.forEach(function (s) {
+        var rec = st.records[s.id];
+        if (rec) recordsPerStudent[s.id].push(rec);
+      });
+    });
+
+    var crumbs = [{ label: course.name }];
+    var html = subnav(course, crumbs);
+    html += '<div class="card-head" style="margin-bottom:1rem;"><h2 style="font-size:1.3rem;">' + esc(course.name) + '</h2><button class="btn ghost" type="button" data-action="delete-course" data-id="' + course.id + '">Kurs löschen</button></div>';
+    html += attendanceOverview(course, recordsPerStudent);
+    html += '<div class="grid" style="margin-top:1.1rem;">';
+
+    // Stunden list
+    var stunde = view.stundeId ? course.stunden.find(function (s) { return s.id === view.stundeId; }) : null;
+    html += '<div class="card"><div class="card-head"><h2 style="font-size:1.05rem;">Stunden</h2><span class="count-pill">' + course.stunden.length + '</span></div>';
+    html += '<ul class="plain">' + (course.stunden.map(function (st) {
+      return '<li class="clickable ' + (view.stundeId === st.id ? "selected" : "") + '" data-action="select-stunde" data-id="' + st.id + '"><span>' + (st.date ? formatDate(st.date) : "(ohne Datum)") + '</span></li>';
+    }).join("") || '<li class="empty" style="background:transparent;">Noch keine Stunde angelegt.</li>') + "</ul>";
+    html += '<form class="row" data-form="add-stunde" data-course="' + course.id + '"><label style="flex:1;">Neue Stunde (Datum)<input type="date" name="date" required /></label><button class="btn small" type="submit">Anlegen</button></form>';
+    html += "</div>";
+
+    if (stunde) {
+      html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Anwesenheit &amp; Bewertung – ' + formatDate(stunde.date) + '</h2>' +
+        '<button class="btn small ' + (stunde.countsTowardMitarbeit ? "" : "secondary") + '" type="button" data-action="stunde-toggle-mitarbeit">' + (stunde.countsTowardMitarbeit ? "Zählt zur mündl. Mitarbeit ✓" : "Zählt nicht zur mündl. Mitarbeit") + "</button></div>";
+      html += '<p style="margin:0 0 0.7rem; font-size:0.8rem; color:var(--muted);">Der Schalter gilt für die ganze Stunde: Ist er aktiv, fließen alle hier eingetragenen Bewertungen gemeinsam in die mündliche Mitarbeit ein.</p>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Anwesenheit</th><th>Bewertung der Stunde</th></tr></thead><tbody>';
+      html += course.students.map(function (s) {
+        var rec = stunde.records[s.id] || { present: true, excused: null, rating: null };
+        return "<tr><td>" + esc(s.name) + "</td><td>" + attendanceToggle(rec, s.id, "stunde") + "</td><td>" + (rec.present ? ratingControl(course, s.id, rec.rating, "stunde") : '<span class="empty">entfällt</span>') + "</td></tr>";
+      }).join("") + "</tbody></table></div></div>";
+    }
+
+    // Klausuren
+    var klausur = view.klausurId ? course.klausuren.find(function (k) { return k.id === view.klausurId; }) : null;
+    html += '<div class="card"><div class="card-head"><h2 style="font-size:1.05rem;">Klausuren</h2><span class="count-pill">' + course.klausuren.length + '</span></div>';
+    html += '<ul class="plain">' + (course.klausuren.map(function (k) {
+      return '<li class="clickable ' + (view.klausurId === k.id ? "selected" : "") + '" data-action="select-klausur" data-id="' + k.id + '"><span>' + esc(k.name) + '</span><span class="sub">Gewicht ' + k.weight + '</span></li>';
+    }).join("") || '<li class="empty" style="background:transparent;">Noch keine Klausur angelegt.</li>') + "</ul>";
+    html += '<form class="row" data-form="add-klausur" data-course="' + course.id + '"><label style="flex:1;">Name<input type="text" name="name" placeholder="z.B. Klausur 2" required /></label><label style="width:6rem;">Gewicht<input type="number" name="weight" min="0.1" step="0.1" value="1" /></label><button class="btn small" type="submit">Anlegen</button></form>';
+    html += "</div>";
+
+    if (klausur) {
+      html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Noten – ' + esc(klausur.name) + ' (Gewicht ' + klausur.weight + ')</h2></div>';
+      html += '<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Note</th></tr></thead><tbody>';
+      html += course.students.map(function (s) {
+        var g = klausur.grades[s.id];
+        return "<tr><td>" + esc(s.name) + '</td><td><input class="numeric-rating" type="number" min="1" max="6" step="0.5" value="' + (g == null ? "" : g) + '" data-action="set-klausur-grade" data-klausur="' + klausur.id + '" data-student="' + s.id + '" /></td></tr>';
+      }).join("") + "</tbody></table></div></div>";
+    }
+
+    // Weighting
+    html += '<div class="card"><div class="card-head"><h2 style="font-size:1.05rem;">Gewichtung Endnote</h2></div>';
+    html += '<form class="weighting-form" data-form="set-weighting" data-course="' + course.id + '">' +
+      '<label>Mündl. Mitarbeit (%)<input type="number" name="mitarbeit" min="0" step="5" value="' + course.weighting.mitarbeit + '" /></label>' +
+      '<label>Fachspez. Leistung (%)<input type="number" name="leistung" min="0" step="5" value="' + course.weighting.leistung + '" /></label>' +
+      '<label>Klausur(en) (%)<input type="number" name="klausur" min="0" step="5" value="' + course.weighting.klausur + '" /></label>' +
+      '<button class="btn small" type="submit">Speichern</button>' +
+      "</form>";
+    html += "</div>";
+
+    // Final grades
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Endnoten</h2><p>Drei getrennte Säulen, Empfehlung automatisch berechnet, Endnote frei änderbar. Fachspez. Leistung: Ø aus den einzeln erfassten Werten je Schüler (Verwaltung in der Schüler-Einzelansicht).</p></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Schüler</th><th>Mündl. Mitarbeit</th><th>Fachspez. Leistung</th><th>Klausurnote</th><th>Endnote (Empfehlung)</th><th>Endnote (änderbar)</th></tr></thead><tbody>';
+    html += course.students.map(function (s) {
+      var calc = politikLeistungForStudent(course, s.id);
+      return "<tr><td>" + esc(s.name) + "</td>" +
+        '<td><input class="numeric-rating" type="number" min="1" max="6" step="0.5" placeholder="' + (calc.mitarbeitSuggestion == null ? "–" : calc.mitarbeitSuggestion) + '" value="' + (calc.mitarbeitOverride != null ? calc.mitarbeitOverride : "") + '" data-action="set-mitarbeit-override" data-student="' + s.id + '" /></td>' +
+        '<td class="num">' + (calc.fachLeistung == null ? "–" : calc.fachLeistung) + (calc.fachLeistungCount ? ' <span class="sub" style="color:var(--muted); font-size:0.72rem;">(' + calc.fachLeistungCount + " Wert" + (calc.fachLeistungCount === 1 ? "" : "e") + ")</span>" : "") + "</td>" +
+        '<td class="num">' + (calc.klausurNote == null ? "–" : calc.klausurNote) + "</td>" +
+        '<td class="num"><span class="badge ' + gradeClass(calc.empfehlung) + '">' + (calc.empfehlung == null ? "–" : calc.empfehlung) + "</span></td>" +
+        '<td><input class="numeric-rating" type="number" min="1" max="6" step="0.5" placeholder="' + (calc.empfehlung == null ? "–" : calc.empfehlung) + '" value="' + (calc.endnoteOverride != null ? calc.endnoteOverride : "") + '" data-action="set-endnote-override" data-student="' + s.id + '" /></td>' +
+        "</tr>";
+    }).join("") + "</tbody></table></div></div>";
+
+    html += "</div>";
+    return html;
+  }
+
+  // ================= SCHÜLER-EINZELANSICHT =================
+  function studentSubnav(course, student) {
+    return '<div class="subnav">' +
+      '<button class="link" type="button" data-action="back-to-list">Kurse</button> <span>/</span> ' +
+      '<button class="link" type="button" data-action="back-to-course">' + esc(course.name) + '</button> <span>/</span> ' +
+      '<span class="crumb-active">' + esc(student.name) + "</span></div>";
+  }
+
+  function statPills(items) {
+    return '<div style="display:flex; gap:0.6rem; flex-wrap:wrap;">' + items.map(function (it) {
+      return '<div style="background:var(--surface-2); border-radius:10px; padding:0.6rem 0.9rem; min-width:90px;">' +
+        '<div class="mono" style="font-size:1.3rem; font-weight:700;">' + it[1] + "</div>" +
+        '<div style="font-size:0.72rem; color:var(--muted);">' + esc(it[0]) + "</div></div>";
+    }).join("") + "</div>";
+  }
+
+  function renderSportStudentDetail(course, student) {
+    var rows = [];
+    course.reihen.forEach(function (r) {
+      r.einheiten.forEach(function (e) {
+        var rec = e.records[student.id];
+        if (rec) rows.push({ reiheName: r.name, date: e.date, thema: e.thema, rec: rec });
+      });
+    });
+    rows.sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); });
+
+    var total = rows.length;
+    var anwesend = rows.filter(function (r) { return r.rec.status === "anwesend"; }).length;
+    var nichtMit = rows.filter(function (r) { return r.rec.status === "nicht_mit"; }).length;
+    var fehlend = rows.filter(function (r) { return r.rec.status === "fehlend"; }).length;
+    var entschuldigt = rows.filter(function (r) { return r.rec.status !== "anwesend" && r.rec.excused === true; }).length;
+    var unentschuldigt = rows.filter(function (r) { return r.rec.status !== "anwesend" && r.rec.excused === false; }).length;
+    var rate = total ? Math.round((anwesend / total) * 100) : null;
+
+    var activityLabel = {};
+    SPORT_ACTIVITIES.forEach(function (a) { activityLabel[a[0]] = a[1]; });
+
+    var html = studentSubnav(course, student);
+    html += '<div class="card-head" style="margin-bottom:1rem;"><h2 style="font-size:1.3rem;">' + esc(student.name) + '</h2><span class="subject-badge sport">Sport – ' + esc(course.name) + "</span></div>";
+
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Anwesenheit</h2></div>' +
+      statPills([["Einheiten", total], ["Anwesend", anwesend], ["Macht nicht mit", nichtMit], ["Fehlend", fehlend], ["Entschuldigt", entschuldigt], ["Unentschuldigt", unentschuldigt], ["Quote", rate == null ? "–" : rate + "%"]]) +
+      "</div>";
+
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Verlauf</h2></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Datum</th><th>Reihe</th><th>Thema</th><th>Status</th><th>Entschuldigung</th><th>Tätigkeit</th><th>Qualität</th><th>Bewertung</th></tr></thead><tbody>';
+    html += (rows.map(function (r) {
+      var rec = r.rec;
+      var statusLabel = rec.status === "anwesend" ? "Anwesend" : rec.status === "fehlend" ? "Fehlend" : "Macht nicht mit";
+      var excusedLabel = rec.status === "anwesend" ? "–" : rec.excused === true ? "Entschuldigt" : rec.excused === false ? "Unentschuldigt" : "–";
+      var activity = rec.status === "nicht_mit" && rec.activity ? activityLabel[rec.activity] : "–";
+      var quality = rec.status === "nicht_mit" && rec.quality ? (rec.quality === "ordentlich" ? "Ordentlich" : "Nicht ordentlich") : "–";
+      var rating = rec.status === "anwesend" ? ratingLabel(course, rec.rating) : "–";
+      return "<tr><td>" + (r.date ? formatDate(r.date) : "–") + "</td><td>" + esc(r.reiheName) + "</td><td>" + (r.thema ? esc(r.thema) : "–") + "</td><td>" + statusLabel + "</td><td>" + excusedLabel + "</td><td>" + activity + "</td><td>" + quality + "</td><td class=\"mono\">" + rating + "</td></tr>";
+    }).join("") || '<tr><td colspan="8" class="empty">Noch keine Einheiten erfasst.</td></tr>');
+    html += "</tbody></table></div></div>";
+
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Noten</h2><p>Ø Bewertung, Empfehlung und finale Leistungsnote je Unterrichtsreihe</p></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Unterrichtsreihe</th><th>Ø Bewertung</th><th>Empfehlung</th><th>Leistungsnote</th></tr></thead><tbody>';
+    html += (course.reihen.map(function (r) {
+      var calc = sportLeistungForStudent(course, r, student.id);
+      return "<tr><td>" + esc(r.name) + '</td><td class="num">' + (calc.avg == null ? "–" : calc.avg.toFixed(2)) + '</td><td class="num"><span class="badge ' + gradeClass(calc.suggestion) + '">' + (calc.suggestion == null ? "–" : calc.suggestion) + '</span></td><td class="num"><span class="badge ' + gradeClass(calc.final) + '">' + (calc.final == null ? "–" : calc.final) + "</span></td></tr>";
+    }).join("") || '<tr><td colspan="4" class="empty">Noch keine Unterrichtsreihe angelegt.</td></tr>');
+    html += "</tbody></table></div></div>";
+    return html;
+  }
+
+  function renderPolitikStudentDetail(course, student) {
+    var rows = course.stunden.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); }).map(function (st) {
+      return { date: st.date, countsTowardMitarbeit: st.countsTowardMitarbeit, rec: st.records[student.id] };
+    }).filter(function (r) { return r.rec; });
+
+    var total = rows.length;
+    var anwesend = rows.filter(function (r) { return r.rec.present; }).length;
+    var fehlend = total - anwesend;
+    var entschuldigt = rows.filter(function (r) { return !r.rec.present && r.rec.excused === true; }).length;
+    var unentschuldigt = rows.filter(function (r) { return !r.rec.present && r.rec.excused === false; }).length;
+    var rate = total ? Math.round((anwesend / total) * 100) : null;
+
+    var html = studentSubnav(course, student);
+    html += '<div class="card-head" style="margin-bottom:1rem;"><h2 style="font-size:1.3rem;">' + esc(student.name) + '</h2><span class="subject-badge politik">Politik – ' + esc(course.name) + "</span></div>";
+
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Anwesenheit</h2></div>' +
+      statPills([["Stunden", total], ["Anwesend", anwesend], ["Fehlend", fehlend], ["Entschuldigt", entschuldigt], ["Unentschuldigt", unentschuldigt], ["Quote", rate == null ? "–" : rate + "%"]]) +
+      "</div>";
+
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Verlauf</h2></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Datum</th><th>Status</th><th>Entschuldigung</th><th>Bewertung</th><th>Zählt zur Mitarbeit?</th></tr></thead><tbody>';
+    html += (rows.map(function (r) {
+      var rec = r.rec;
+      var excusedLabel = rec.present ? "–" : rec.excused === true ? "Entschuldigt" : rec.excused === false ? "Unentschuldigt" : "–";
+      var rating = rec.present ? ratingLabel(course, rec.rating) : "–";
+      var countsLabel = rec.present && rec.rating != null ? (r.countsTowardMitarbeit ? "Ja" : "Nein") : "–";
+      return "<tr><td>" + (r.date ? formatDate(r.date) : "–") + "</td><td>" + (rec.present ? "Anwesend" : "Fehlend") + "</td><td>" + excusedLabel + "</td><td class=\"mono\">" + rating + "</td><td>" + countsLabel + "</td></tr>";
+    }).join("") || '<tr><td colspan="5" class="empty">Noch keine Stunden erfasst.</td></tr>');
+    html += "</tbody></table></div></div>";
+
+    var calc = politikLeistungForStudent(course, student.id);
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Klausuren</h2></div>';
+    html += '<div class="table-wrap"><table><thead><tr><th>Klausur</th><th>Gewicht</th><th>Note</th></tr></thead><tbody>';
+    html += (course.klausuren.map(function (k) {
+      var g = k.grades[student.id];
+      return "<tr><td>" + esc(k.name) + '</td><td class="num">' + k.weight + '</td><td class="num">' + (g == null ? "–" : g) + "</td></tr>";
+    }).join("") || '<tr><td colspan="3" class="empty">Noch keine Klausur angelegt.</td></tr>');
+    html += "</tbody></table></div></div>";
+
+    var fachList = course.fachLeistung[student.id] || [];
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Fachspezifische Leistungen</h2><p>Beliebig viele Werte im Jahr, z.B. Referate oder Projekte – der Durchschnitt zählt</p></div>';
+    html += '<ul class="plain">' + (fachList.map(function (f) {
+      return '<li><span>' + f.value + (f.label ? " – " + esc(f.label) : "") + '</span><button class="btn ghost" type="button" data-action="delete-fach-leistung" data-id="' + f.id + '">Löschen</button></li>';
+    }).join("") || '<li class="empty" style="background:transparent;">Noch kein Wert erfasst.</li>') + "</ul>";
+    html += '<form class="row" data-form="add-fach-leistung"><label>Wert (1–6)<input type="number" name="value" min="1" max="6" step="0.5" required /></label><label style="flex:1;">Bezeichnung (optional)<input type="text" name="label" placeholder="z.B. Referat" /></label><button class="btn small" type="submit">Hinzufügen</button></form>';
+    html += '<p style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Durchschnitt: <strong>' + (calc.fachLeistung == null ? "–" : calc.fachLeistung) + "</strong></p>";
+    html += "</div>";
+
+    html += '<div class="card wide"><div class="card-head"><h2 style="font-size:1.05rem;">Endnote</h2><p>Drei Säulen (Mitarbeit, fachspez. Leistung, Klausur), Empfehlung und die aktuell gültige Endnote</p></div>';
+    html += statPills([
+      ["Mündl. Mitarbeit", calc.mitarbeit == null ? "–" : calc.mitarbeit],
+      ["Fachspez. Leistung", calc.fachLeistung == null ? "–" : calc.fachLeistung],
+      ["Klausurnote", calc.klausurNote == null ? "–" : calc.klausurNote],
+      ["Endnote (Empfehlung)", calc.empfehlung == null ? "–" : calc.empfehlung],
+      ["Endnote (aktuell)", calc.endnote == null ? "–" : calc.endnote]
+    ]);
+    html += "</div>";
+    return html;
+  }
+
+  // ---------- Event delegation: clicks ----------
+  main.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-action]");
+    if (!t) return;
+    var action = t.getAttribute("data-action");
+    var course = view.courseId ? getCourse(view.courseId) : null;
+
+    if (action === "open-course") { view.screen = "workspace"; view.courseId = Number(t.dataset.id); resetCourseView(); render(); return; }
+    if (action === "back-to-list") { view.screen = "list"; view.courseId = null; render(); return; }
+    if (action === "delete-course") {
+      var data = currentData();
+      data.courses = data.courses.filter(function (c) { return c.id !== Number(t.dataset.id); });
+      view.screen = "list"; view.courseId = null; render(); return;
+    }
+    if (!course) return;
+
+    if (action === "select-reihe") { view.reihenId = Number(t.dataset.id); view.einheitId = null; render(); return; }
+    if (action === "select-einheit") { view.einheitId = Number(t.dataset.id); render(); return; }
+    if (action === "select-stunde") { view.stundeId = Number(t.dataset.id); render(); return; }
+    if (action === "select-klausur") { view.klausurId = Number(t.dataset.id); render(); return; }
+    if (action === "select-student") { view.studentId = Number(t.dataset.id); render(); return; }
+    if (action === "back-to-course") { view.studentId = null; render(); return; }
+    if (action === "delete-fach-leistung") {
+      var fachList = course.fachLeistung[view.studentId];
+      if (!fachList) return;
+      course.fachLeistung[view.studentId] = fachList.filter(function (f) { return f.id !== Number(t.dataset.id); });
+      render(); return;
+    }
+
+    // Attendance: Sport (3-stufig, innerhalb der aktiven Einheit)
+    if (action === "sport-status" || action === "sport-excused" || action === "sport-activity" || action === "sport-quality") {
+      var reiheS = course.reihen.find(function (r) { return r.id === view.reihenId; });
+      var einheitS = reiheS && reiheS.einheiten.find(function (x) { return x.id === view.einheitId; });
+      if (!einheitS) return;
+      var sportSid = Number(t.dataset.student);
+      if (action === "sport-status") setSportStatus(einheitS.records, sportSid, t.dataset.value);
+      else if (action === "sport-excused") setSportField(einheitS.records, sportSid, "excused", t.dataset.value === "true");
+      else if (action === "sport-activity") {
+        setSportField(einheitS.records, sportSid, "activity", t.dataset.value);
+        setSportField(einheitS.records, sportSid, "quality", null);
+      }
+      else if (action === "sport-quality") setSportField(einheitS.records, sportSid, "quality", t.dataset.value);
+      render(); return;
+    }
+    if (action === "stunde-present" || action === "stunde-absent" || action === "stunde-excused" || action === "stunde-unexcused") {
+      var stunde = course.stunden.find(function (x) { return x.id === view.stundeId; });
+      if (!stunde) return;
+      applyAttendanceAction(stunde.records, Number(t.dataset.student), action.replace("stunde-", ""));
+      render(); return;
+    }
+    if (action === "stunde-toggle-mitarbeit") {
+      var stundeM = course.stunden.find(function (x) { return x.id === view.stundeId; });
+      if (!stundeM) return;
+      stundeM.countsTowardMitarbeit = !stundeM.countsTowardMitarbeit;
+      render(); return;
+    }
+    if (action === "einheit-rating-symbol") {
+      var reihe2 = course.reihen.find(function (r) { return r.id === view.reihenId; });
+      var einheit2 = reihe2 && reihe2.einheiten.find(function (x) { return x.id === view.einheitId; });
+      if (!einheit2) return;
+      setRecord(einheit2.records, Number(t.dataset.student), { rating: t.dataset.value });
+      render(); return;
+    }
+    if (action === "stunde-rating-symbol") {
+      var stunde2 = course.stunden.find(function (x) { return x.id === view.stundeId; });
+      if (!stunde2) return;
+      setRecord(stunde2.records, Number(t.dataset.student), { rating: t.dataset.value });
+      render(); return;
+    }
+  });
+
+  function applyAttendanceAction(records, studentId, kind) {
+    if (kind === "present") setRecord(records, studentId, { present: true, excused: null });
+    else if (kind === "absent") setRecord(records, studentId, { present: false, excused: false, rating: null });
+    else if (kind === "excused") setRecord(records, studentId, { excused: true });
+    else if (kind === "unexcused") setRecord(records, studentId, { excused: false });
+  }
+  function setRecord(records, studentId, patch) {
+    var rec = records[studentId] || { present: true, excused: null, rating: null };
+    records[studentId] = Object.assign({}, rec, patch);
+  }
+
+  // ---------- Event delegation: numeric inputs / change ----------
+  main.addEventListener("change", function (e) {
+    var t = e.target;
+    var action = t.getAttribute && t.getAttribute("data-action");
+    if (!action) return;
+    var course = view.courseId ? getCourse(view.courseId) : null;
+    if (!course) return;
+
+    if (action === "einheit-rating-numeric") {
+      var reihe = course.reihen.find(function (r) { return r.id === view.reihenId; });
+      var einheit = reihe && reihe.einheiten.find(function (x) { return x.id === view.einheitId; });
+      if (!einheit) return;
+      setRecord(einheit.records, Number(t.dataset.student), { rating: t.value === "" ? null : Number(t.value) });
+      render(); return;
+    }
+    if (action === "stunde-rating-numeric") {
+      var stunde = course.stunden.find(function (x) { return x.id === view.stundeId; });
+      if (!stunde) return;
+      setRecord(stunde.records, Number(t.dataset.student), { rating: t.value === "" ? null : Number(t.value) });
+      render(); return;
+    }
+    if (action === "set-leistungsnote") {
+      var reihe2 = course.reihen.find(function (r) { return r.id === view.reihenId; });
+      if (!reihe2) return;
+      var sid = Number(t.dataset.student);
+      if (t.value === "") delete reihe2.overrides[sid]; else reihe2.overrides[sid] = Number(t.value);
+      render(); return;
+    }
+    if (action === "set-mitarbeit-override") {
+      var sidM = Number(t.dataset.student);
+      if (t.value === "") delete course.mitarbeitOverrides[sidM]; else course.mitarbeitOverrides[sidM] = Number(t.value);
+      render(); return;
+    }
+    if (action === "set-endnote-override") {
+      var sidE = Number(t.dataset.student);
+      if (t.value === "") delete course.endnoteOverrides[sidE]; else course.endnoteOverrides[sidE] = Number(t.value);
+      render(); return;
+    }
+    if (action === "set-klausur-grade") {
+      var klausur = course.klausuren.find(function (k) { return k.id === Number(t.dataset.klausur); });
+      if (!klausur) return;
+      var sid3 = Number(t.dataset.student);
+      if (t.value === "") delete klausur.grades[sid3]; else klausur.grades[sid3] = Number(t.value);
+      render(); return;
+    }
+  });
+
+  // ---------- Event delegation: forms ----------
+  main.addEventListener("submit", function (e) {
+    var form = e.target;
+    var kind = form.getAttribute("data-form");
+    if (!kind) return;
+    e.preventDefault();
+    var fd = new FormData(form);
+    var data = currentData();
+
+    if (kind === "add-course") {
+      var subject = fd.get("subject");
+      var ratingScale = fd.get("ratingScale") || "numeric";
+      var names = (fd.get("roster") || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean);
+      var course = {
+        id: data.nextCourseId++, name: fd.get("name").trim(), subject: subject, ratingScale: ratingScale,
+        students: makeStudents(names), seq: { reihe: 1, einheit: 1, stunde: 1, klausur: 1, fachLeistung: 1 }
+      };
+      if (subject === "sport") { course.reihen = []; }
+      else {
+        course.stunden = []; course.klausuren = [];
+        course.fachLeistung = {}; course.mitarbeitOverrides = {}; course.endnoteOverrides = {};
+        course.weighting = { mitarbeit: 34, leistung: 33, klausur: 33 };
+      }
+      data.courses.push(course);
+      render(); return;
+    }
+
+    var course = view.courseId ? getCourse(view.courseId) : null;
+    if (!course) return;
+
+    if (kind === "add-reihe") {
+      var id = course.seq.reihe++;
+      course.reihen.push({ id: id, name: fd.get("name").trim(), einheiten: [], overrides: {} });
+      view.reihenId = id; render(); return;
+    }
+    if (kind === "add-einheit") {
+      var reihe = course.reihen.find(function (r) { return r.id === view.reihenId; });
+      if (!reihe) return;
+      var eid = course.seq.einheit++;
+      var records = {};
+      course.students.forEach(function (s) { records[s.id] = newSportRecord(); });
+      reihe.einheiten.push({ id: eid, date: fd.get("date"), thema: (fd.get("thema") || "").trim() || null, records: records });
+      view.einheitId = eid; render(); return;
+    }
+    if (kind === "add-stunde") {
+      var sid = course.seq.stunde++;
+      var records2 = {};
+      course.students.forEach(function (s) { records2[s.id] = { present: true, excused: null, rating: null }; });
+      course.stunden.push({ id: sid, date: fd.get("date"), countsTowardMitarbeit: false, records: records2 });
+      view.stundeId = sid; render(); return;
+    }
+    if (kind === "add-klausur") {
+      var kid = course.seq.klausur++;
+      course.klausuren.push({ id: kid, name: fd.get("name").trim(), weight: Number(fd.get("weight")) || 1, grades: {} });
+      view.klausurId = kid; render(); return;
+    }
+    if (kind === "add-fach-leistung") {
+      if (!view.studentId) return;
+      if (!course.fachLeistung[view.studentId]) course.fachLeistung[view.studentId] = [];
+      var flid = course.seq.fachLeistung++;
+      course.fachLeistung[view.studentId].push({ id: flid, value: Number(fd.get("value")), label: (fd.get("label") || "").trim() || null });
+      render(); return;
+    }
+    if (kind === "set-weighting") {
+      course.weighting = {
+        mitarbeit: Number(fd.get("mitarbeit")) || 0,
+        leistung: Number(fd.get("leistung")) || 0,
+        klausur: Number(fd.get("klausur")) || 0
+      };
+      render(); return;
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
